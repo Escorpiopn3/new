@@ -58,18 +58,26 @@ jobs:
           make package/feeds/packages/alsa-lib/compile V=s
           make package/feeds/packages/v4l2rtspserver/compile V=s
 
+      
       - name: Collect IPK files
         run: |
           mkdir -p output
-          find sdk/bin -type f \\( -name 'v4l2rtspserver_*.ipk' -o -name 'alsa-lib_*.ipk' \\) -exec cp -v {} output/ \\;
-          test -n "$(find output -name 'v4l2rtspserver_*.ipk' -print -quit)"
-          printf '%s\n' \
-            'OpenWrt: 22.03.5' \
-            'Target: ramips/mt7621' \
-            'Architecture: mipsel_24kc' \
-            'ALSA: enabled in CMake; alsa-lib runtime dependency added' \
-            'SDK SHA256: 1c7060d5b3653f73b062a31bf3220e59e696a2790c38c5e3352afffaf304fbdd' \
-            > output/BUILD-INFO.txt
+
+          find sdk/bin -type f -name 'v4l2rtspserver_*.ipk' -exec cp {} output/ \;
+          find sdk/bin -type f -name 'alsa-lib_*.ipk' -exec cp {} output/ \;
+
+          if ! ls output/v4l2rtspserver_*.ipk >/dev/null 2>&1; then
+            echo "ERROR: v4l2rtspserver IPK not found"
+            exit 1
+          fi
+
+          cat > output/BUILD-INFO.txt <<'EOF'
+          OpenWrt: 22.03.5
+          Target: ramips/mt7621
+          Architecture: mipsel_24kc
+          ALSA: enabled
+          EOF
+
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
